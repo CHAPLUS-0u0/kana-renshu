@@ -152,7 +152,9 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
 
 /* おうえんキャラ */
-.coach{width:min(100%,560px);display:flex;align-items:center;gap:12px}
+/* マスの大きさ：はば と たかさ の どちらにも おさまるように（iPad よこむき で したが きれないように） */
+.stage{--pw:min(100%,560px,max(260px,calc(100vh - 300px)));--pw:min(100%,560px,max(260px,calc(100dvh - 300px)))}
+.coach{width:var(--pw);display:flex;align-items:center;gap:12px}
 .buddy{width:76px;height:76px;flex:none;border-radius:50%;background:#ffe9a8;display:grid;place-items:center;border:4px solid #fff;box-shadow:0 0 0 2px #f5d77a}
 .buddy svg{width:60px;height:60px}
 .buddy.hop svg{animation:hop .6s ease}
@@ -168,7 +170,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .voice{flex:none;border:2px solid #eadbc6;background:#fff;border-radius:999px;padding:6px 10px;font-weight:700;font-size:12px;color:var(--muted)}
 .voice[aria-pressed="true"]{border-color:var(--pink);color:var(--pink)}
 
-.paper{position:relative;width:min(100%,560px);aspect-ratio:1;max-width:100%;background:var(--paper);border-radius:18px;box-shadow:0 2px 0 #efe2cf,0 8px 24px rgba(140,100,60,.12);overflow:hidden}
+.paper{position:relative;width:var(--pw);aspect-ratio:1;max-width:100%;background:var(--paper);border-radius:18px;box-shadow:0 2px 0 #efe2cf,0 8px 24px rgba(140,100,60,.12);overflow:hidden}
 #board{width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
 .done{position:absolute;left:0;right:0;bottom:6%;text-align:center;pointer-events:none}
 .done span{display:inline-block;background:#fff;border:3px solid var(--red);color:var(--red);font-weight:900;font-size:clamp(18px,4vw,26px);padding:6px 18px;border-radius:999px;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
@@ -206,7 +208,12 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 @keyframes pulse{from{transform:scale(1);opacity:.8}to{transform:scale(2.2);opacity:0}}
 .hanamaru path{fill:none;stroke:var(--red);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
 
+/* よこならびの とき：ひだりの パネルが ながくても がめんの なかで スクロール */
+@media (min-width:761px){
+  .panel{max-height:calc(100vh - 80px);max-height:calc(100dvh - 80px);overflow-y:auto;box-sizing:border-box;position:sticky;top:20px}
+}
 @media (max-width:760px){
+  .stage{--pw:min(100%,560px)}
   body{padding-block:12px}
   .app{grid-template-columns:minmax(0,1fr);padding:12px;gap:14px;border-radius:22px}
   .stage{order:-1}
@@ -367,12 +374,12 @@ const SETS = {
   hira: { chars: HIRA, groups: KANA_ROWS, name: "ひらがな", label: "ぎょう", unit: "もじ" },
   kata: { chars: KATA, groups: KANA_ROWS, name: "カタカナ", label: "ぎょう", unit: "もじ" },
   k1:   { chars: K1, groups: tens(K1.length), name: "1ねんせいの かんじ", label: "グループ", unit: "じ", kanji: true, read: K1_READ },
-  k2:   { chars: K2, groups: tens(K2.length), name: "2ねんせいの かんじ", label: "グループ", unit: "じ", kanji: true, read: K2_READ },
+  k2:   { chars: K2, groups: tens(K2.length), name: "2年生の かんじ", label: "グループ", unit: "じ", kanji: true, read: K2_READ },
 };
-SETS.k3 = { chars: K3, groups: tens(K3.length), name: "3ねんせいの かんじ", label: "グループ", unit: "じ", kanji: true, read: K3_READ };
-SETS.k4 = { chars: K4, groups: tens(K4.length), name: "4ねんせいの かんじ", label: "グループ", unit: "じ", kanji: true, read: K4_READ };
-SETS.k5 = { chars: K5, groups: tens(K5.length), name: "5ねんせいの かんじ", label: "グループ", unit: "じ", kanji: true, read: K5_READ };
-SETS.k6 = { chars: K6, groups: tens(K6.length), name: "6ねんせいの かんじ", label: "グループ", unit: "じ", kanji: true, read: K6_READ };
+SETS.k3 = { chars: K3, groups: tens(K3.length), name: "3年生の 漢字", label: "グループ", unit: "じ", kanji: true, read: K3_READ };
+SETS.k4 = { chars: K4, groups: tens(K4.length), name: "4年生の 漢字", label: "グループ", unit: "じ", kanji: true, read: K4_READ };
+SETS.k5 = { chars: K5, groups: tens(K5.length), name: "5年生の 漢字", label: "グループ", unit: "じ", kanji: true, read: K5_READ };
+SETS.k6 = { chars: K6, groups: tens(K6.length), name: "6年生の 漢字", label: "グループ", unit: "じ", kanji: true, read: K6_READ };
 for (const k of ["k1", "k2", "k3", "k4", "k5", "k6"]) if (SETS[k].chars.length !== SETS[k].read.length) console.error(k + " よみの かずが あわない", SETS[k].chars.length, SETS[k].read.length);
 const GRADES = [1, 2, 3, 4, 5, 6];
 const NS = "http://www.w3.org/2000/svg";
@@ -445,7 +452,7 @@ function renderSearch() {
   res.slice(0, 60).forEach(({ key, i, c }) => {
     const b = document.createElement("button");
     b.textContent = c;
-    const g = document.createElement("small"); g.textContent = key.slice(1) + "ねん"; b.append(g);
+    const g = document.createElement("small"); g.textContent = key.slice(1) + (key === "k1" ? "ねん" : "年"); b.append(g);
     if (state.cleared[c]) { const m = document.createElement("span"); m.className = "mk"; m.textContent = state.cleared[c] === 2 ? "◎" : "○"; b.append(m); }
     b.onclick = () => { if (busy) return; $("q").value = ""; state.mode = key; go(i); };
     $("resList").append(b);
@@ -818,7 +825,7 @@ function showStart(view = "home") {
   GRADES.forEach(g => {
     const s = SETS["k" + g], b = document.createElement("button");
     b.className = "choice kanji";
-    b.innerHTML = `<b>${g}</b><span class="cname">ねんせい</span><span class="cnt ${s ? "" : "soon"}">${s ? `${doneCount(s.chars)} / ${s.chars.length} じ` : "じゅんびちゅう"}</span>`;
+    b.innerHTML = `<b>${g}</b><span class="cname">${g === 1 ? "ねんせい" : "年生"}</span><span class="cnt ${s ? "" : "soon"}">${s ? `${doneCount(s.chars)} / ${s.chars.length} じ` : "じゅんびちゅう"}</span>`;
     if (s) b.onclick = () => startMode("k" + g); else b.disabled = true;
     $("grades").append(b);
   });
