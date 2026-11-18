@@ -1537,7 +1537,7 @@ document.addEventListener("keydown", e => {
 
 /* ---------- あたらしい バージョンが あれば よみなおす ----------
    GitHub Pages は 10ぷん ほど ふるい ページを のこすので、小さい version.json だけ まいかい たしかめる */
-const BUILD_ID = "20261118124129";
+const BUILD_ID = "20261118124300";
 if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
   fetch("version.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
