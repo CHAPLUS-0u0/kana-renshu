@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="&#12363;&#12394;&#12428;&#12435;&#12375;&#12421;&#12358;">
+<meta name="apple-mobile-web-app-title" content="&#12418;&#12376;&#12463;&#12452;&#12474;">
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font-size:14px}
 img{max-width:100%}
 [hidden]{display:none!important}
-</style><title>かなれんしゅうちょう</title>
+</style><title>&#12383;&#12414;&#12372;&#12434; &#12381;&#12384;&#12390;&#12429;&#65281; &#12418;&#12376;&#12463;&#12452;&#12474;</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Klee+One:wght@600&display=swap">
 <style>
@@ -54,6 +54,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .logo span:nth-child(3){color:#e39a1c;transform:rotate(-2deg)}
 .logo span:nth-child(4){color:var(--green);transform:rotate(4deg)}
 .logo span:nth-child(5){color:var(--ink)}
+.logo .logo-sub{flex-basis:100%;font-family:var(--font-ui);font-weight:900;font-size:clamp(18px,4.2vw,28px);color:#c47f10;letter-spacing:.06em;margin-bottom:4px}
 .lead{margin:6px 0 0;font-weight:700;font-size:18px}
 .choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:100%}
 .choice{border:0;border-radius:22px;padding:18px 10px 16px;background:#fff;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 4px 0 var(--sh);transition:transform .15s}
@@ -758,7 +759,8 @@ if (useDinoArt) {
 // はじめの がめんの キャラは すこし おおきく
 if (useDinoArt) {
   const st = document.createElement("style");
-  st.textContent = ".start-buddy{width:180px;height:180px}.start-buddy svg{width:150px;height:150px}";
+  // 2ひきを ならべるので よこながの まるに する
+  st.textContent = ".start-buddy{width:min(92%,440px);height:auto;aspect-ratio:2/1;border-radius:999px}.start-buddy svg{width:94%;height:94%}";
   document.head.append(st);
 }
 function dinoArtSvg(stage) {
@@ -1360,7 +1362,11 @@ function showStart(view) {
   if (["menu", "grade", "quiz"].includes(view) && !profile) view = "title";
   VIEWS.forEach(v => { $("v-" + v).hidden = v !== view; });
   // イベント版の はじめの がめんは、つぎに でてくる キャラの おとなの すがたを みせる
-  $("startBuddy").innerHTML = buddySvg(EDITION === "event" && useDinoArt ? MAX_STAGE : stageNow());
+  if (EDITION === "event" && useDinoArt) {
+    // はじめの がめんは ティタ と グノ を ならべて みせる
+    $("startBuddy").setAttribute("viewBox", "0 0 200 100");
+    $("startBuddy").innerHTML = DINO_KIDS.map((k, i) => `<use href="#art-${k.id}" x="${4 + i * 100}" y="4" width="92" height="92"/>`).join("");
+  } else $("startBuddy").innerHTML = buddySvg(stageNow());
   $("startTotal").textContent = profile ? `いまの レベル：Lv.${level()}（${state.pts}pt）`
     : EDITION === "event" && useDinoArt ? `こんどは ${kid().name} と いっしょに あそぼう！` : "";
   if (view === "title") {
@@ -1504,6 +1510,14 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") step(-1);
 });
 
+// イベント版は なまえも かえる（はじめの がめん・タブ・ホームがめんに ついかした ときの なまえ）
+const EVENT_TITLE = "たまごを そだてろ！ もじクイズ";
+if (EDITION === "event") {
+  document.querySelector(".logo").innerHTML = `<small class="logo-sub">たまごを そだてろ！</small><span>も</span><span>じ</span><span>クイズ</span>`;
+  document.title = EVENT_TITLE;
+  const m = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if (m) m.content = "もじクイズ";
+}
 if (EDITION === "event") showStart("event");
 else {
   const last = root.profiles.find(p => p.id === root.last);
