@@ -130,6 +130,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .grow{display:flex;justify-content:space-between;align-items:center;gap:2px}
 .grow span{width:38px;height:38px;border-radius:50%;background:#f3e8d8;display:grid;place-items:center;flex:none}
 .grow span svg{width:30px;height:30px;filter:brightness(0) opacity(.18)}
+.grow span b{font-weight:900;font-size:18px;color:#b8a892}
 .grow span.got{background:var(--buddy-bg)}
 .grow span.got svg{filter:none}
 .grow span.now{box-shadow:0 0 0 3px var(--pink)}
@@ -744,10 +745,24 @@ const DINO_IMAGES = /*DINO_IMAGES*/{};
 const DINO_KIDS = [
   { id: "tita", name: "ティタ", egg: "#f7f4e3", spot: "#c9b67c", line: "#cfc59a" },   // くびの ながい こ
   { id: "guno", name: "グノ", egg: "#fbf1e4", spot: "#e2b48f", line: "#d9b896" },     // ちゃいろで しょうめんを むいている こ
+  // レアキャラ：うまれた ときは「ちぃ。ちゃん」、そだつと「あいさきちぃ。」（がぞう chii_adult）
+  { id: "chii", name: "ちぃ。ちゃん", baby: "ちぃ。ちゃん", adult: "あいさきちぃ。", adultImg: "chii_adult", egg: "#fdf3f8", spot: "#f3b6d3", line: "#e8c6d6", rare: true },
 ];
+const RARE_CHANCE = 1 / 25;   // レアキャラが でる かくりつ（だいたい 20〜30かいに 1かい）
+// たまごの うちは なにが うまれるか わからないように、みんな おなじ いろ
+const MYSTERY_EGG = { egg: "#fbf6ea", spot: "#d9c9a8", line: "#d8cbb0" };
 const useDinoArt = CHARA === "dino" && !!DINO_IMAGES.tita;
-let kidIdx = Math.floor(Math.random() * DINO_KIDS.length);
+let kidIdx = Math.floor(Math.random() * 2);
 const kid = () => DINO_KIDS[kidIdx];
+// イベント版：あそぶ たびに ランダムで きめる（たまに レアキャラ）
+function pickKid() {
+  if (!useDinoArt) return;
+  const normal = DINO_KIDS.filter(k => !k.rare);
+  const rare = DINO_KIDS.filter(k => k.rare && DINO_IMAGES[k.id]);
+  const k = rare.length && Math.random() < RARE_CHANCE ? pick(rare) : pick(normal);
+  kidIdx = DINO_KIDS.indexOf(k);
+  applyKid();
+}
 // イラストは 1かいだけ よみこんで、あとは <use> で つかいまわす（なんども おなじ がぞうを はりつけない）
 if (useDinoArt) {
   const defs = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -766,7 +781,10 @@ if (useDinoArt) {
 function dinoArtSvg(stage) {
   const k = kid(), shell = `fill="${k.egg}" stroke="${k.line}" stroke-width="2" stroke-linejoin="round"`;
   const spots = `<circle cx="36" cy="74" r="4.5" fill="${k.spot}"/><circle cx="64" cy="79" r="5.5" fill="${k.spot}"/><circle cx="52" cy="88" r="3" fill="${k.spot}"/>`;
-  if (stage === 0) return `<ellipse cx="50" cy="55" rx="30" ry="38" ${shell}/><ellipse cx="40" cy="36" rx="6" ry="9" fill="#fff" opacity=".7" transform="rotate(-20 40 36)"/><circle cx="38" cy="58" r="5" fill="${k.spot}"/><circle cx="62" cy="40" r="4" fill="${k.spot}"/><circle cx="63" cy="72" r="6" fill="${k.spot}"/><circle cx="42" cy="80" r="3.5" fill="${k.spot}"/>`;
+  if (stage === 0) {
+    const e = MYSTERY_EGG, es = `fill="${e.egg}" stroke="${e.line}" stroke-width="2"`;
+    return `<ellipse cx="50" cy="55" rx="30" ry="38" ${es}/><ellipse cx="40" cy="36" rx="6" ry="9" fill="#fff" opacity=".7" transform="rotate(-20 40 36)"/><circle cx="38" cy="58" r="5" fill="${e.spot}"/><circle cx="62" cy="40" r="4" fill="${e.spot}"/><circle cx="63" cy="72" r="6" fill="${e.spot}"/><circle cx="42" cy="80" r="3.5" fill="${e.spot}"/>`;
+  }
   if (stage === 1) {
     // からから かおを だして、あたまに からの かけらが のっている
     // かおの がぞうが ましかくに ちかい（グノ）か、たてながか（ティタ）で おきかたを かえる
@@ -779,7 +797,8 @@ function dinoArtSvg(stage) {
       + `<path d="M18 62l8 6 7-7 8 7 7-7 7 7 8-7 7 7 8-6v4q0 30-32 30T18 66z" ${shell}/>${spots}`
       + `<path d="M33 ${capY}q17-20 34 0l-4 4-4-5-5 5-4-5-4 5-5-5-4 5z" ${shell} transform="rotate(-14 50 ${capY - 4})"/>`;
   }
-  return `<use href="#art-${k.id}" x="0" y="0" width="100" height="100"/>`;
+  const adultArt = k.adultImg && DINO_IMAGES[k.adultImg] ? k.adultImg : k.id;
+  return `<use href="#art-${adultArt}" x="0" y="0" width="100" height="100"/>`;
 }
 const STAGE_MAP = useDinoArt ? [0, 1, 2] : EDITION === "event" ? [0, 2, 3] : [0, 1, 2, 3, 4];
 const buddySvg = stage => useDinoArt ? dinoArtSvg(STAGE_MAP[stage]) : CHARAS[CHARA].svg(STAGE_MAP[stage]);
@@ -814,16 +833,15 @@ let STAGE_NAMES, STAGE_MSG;
 function applyKid() {
   if (useDinoArt) {
     const n = kid().name;
-    STAGE_NAMES = [`${n}の たまご`, `あかちゃん ${n}`, n];
-    STAGE_MSG = ["", `${n}が うまれたよ！`, `${n}に なったよ！`];
+    const baby = kid().baby || `あかちゃん ${n}`, adult = kid().adult || n;
+    STAGE_NAMES = ["ふしぎな たまご", baby, adult];
+    STAGE_MSG = ["", `${kid().baby || n}が うまれたよ！`, `${adult}に なったよ！`];
   } else {
     STAGE_NAMES = STAGE_MAP.map(i => CHARAS[CHARA].names[i]);
     STAGE_MSG = STAGE_MAP.map(i => CHARAS[CHARA].msgs[i]);
   }
 }
 applyKid();
-// イベント版：1かい あそぶ ごとに ティタ と グノ が こうたい
-function nextKid() { if (!useDinoArt) return; kidIdx = (kidIdx + 1) % DINO_KIDS.length; applyKid(); }
 const MAX_STAGE = STAGE_MAP.length - 1;
 const levelOf = pts => Math.floor(pts / 100) + 1;
 const level = () => levelOf(state.pts);
@@ -858,7 +876,7 @@ function showGrow(a, b, opts = {}) {
   const later = (ms, f) => evoTimers.push(setTimeout(f, ms));
   $("evoSvg").innerHTML = buddySvg(a);
   $("evoTag").textContent = changed ? "…あれ？ ようすが へん！" : "レベルアップ！";
-  $("evoName").textContent = changed ? `${STAGE_NAMES[b]}に なった！` : (opts.big || "");
+  $("evoName").textContent = changed ? (STAGE_MSG[b] || `${STAGE_NAMES[b]}に なった！`) : (opts.big || "");
   $("evoMsg").textContent = opts.sub || "";
   $("evoOk").hidden = true;
   $("evoSpark").innerHTML = "";
@@ -868,7 +886,10 @@ function showGrow(a, b, opts = {}) {
   const reveal = () => {
     $("evoSvg").innerHTML = buddySvg(b);
     evo.className = "evo flash reveal";
-    $("evoTag").textContent = changed ? "へんしん！" : "レベルアップ！";
+    // レアキャラが うまれた ときは とくべつに
+    const rareBorn = useDinoArt && kid().rare && a === 0;
+    $("evoTag").textContent = rareBorn ? "レアキャラ だ！" : changed ? (useDinoArt && a === 0 ? "うまれた！" : "へんしん！") : "レベルアップ！";
+    if (rareBorn) tone([784, 988, 1175, 1568, 1976], "triangle", .1);
     const sp = $("evoSpark"), colors = ["#e8577e", "#3d6fd8", "#ffd34d", "#3a9d6a", "#ff9a3c"];
     for (let i = 0; i < 46; i++) {
       const q = document.createElement("i");
@@ -881,7 +902,7 @@ function showGrow(a, b, opts = {}) {
       sp.append(s);
     }
     tone([523, 659, 784, 1047, 1319, 1568], "triangle", .12);
-    if (state.voice) later(500, () => speak(changed ? `${STAGE_NAMES[b]}に なった！` : "レベルアップ！"));
+    if (state.voice) later(500, () => speak(changed ? $("evoName").textContent : "レベルアップ！"));
     if (opts.auto) later(3600, closeGrow);
     else later(1200, () => { $("evoOk").hidden = false; $("evoOk").focus(); });
   };
@@ -1258,7 +1279,9 @@ function renderSess() {
   if (EDITION === "event") {
     $("grow").innerHTML = range(0, MAX_STAGE + 1).map(st =>
       (st ? `<i class="${st <= sess.stage ? "got" : ""}"></i>` : "") +
-      `<span class="${st <= sess.stage ? "got" : ""}${st === sess.stage ? " now" : ""}"><svg viewBox="0 0 100 100">${buddySvg(st)}</svg></span>`
+      `<span class="${st <= sess.stage ? "got" : ""}${st === sess.stage ? " now" : ""}">${
+        // まだの すがたは かげも みせない（なにが うまれるかは おたのしみ）
+        st > sess.stage && useDinoArt ? "<b>？</b>" : `<svg viewBox="0 0 100 100">${buddySvg(st)}</svg>`}</span>`
     ).join("");
   }
 }
@@ -1310,7 +1333,6 @@ function showResult() {
   resultShownAt = Date.now();
 }
 function endSession() {
-  if (sess && EDITION === "event") nextKid();   // つぎの ひとは もう1ぴきの キャラで
   sess = null;
   clearTimeout(idleTimer);
   $("result").hidden = true;
@@ -1365,10 +1387,11 @@ function showStart(view) {
   if (EDITION === "event" && useDinoArt) {
     // はじめの がめんは ティタ と グノ を ならべて みせる
     $("startBuddy").setAttribute("viewBox", "0 0 200 100");
-    $("startBuddy").innerHTML = DINO_KIDS.map((k, i) => `<use href="#art-${k.id}" x="${4 + i * 100}" y="4" width="92" height="92"/>`).join("");
+    $("startBuddy").innerHTML = DINO_KIDS.filter(k => !k.rare).map((k, i) => `<use href="#art-${k.id}" x="${4 + i * 100}" y="4" width="92" height="92"/>`).join("");
   } else $("startBuddy").innerHTML = buddySvg(stageNow());
+  // イベント版は なにが うまれるかを ひみつに しておく
   $("startTotal").textContent = profile ? `いまの レベル：Lv.${level()}（${state.pts}pt）`
-    : EDITION === "event" && useDinoArt ? `こんどは ${kid().name} と いっしょに あそぼう！` : "";
+    : EDITION === "event" && useDinoArt ? "たまごから なにが うまれるかな？" : "";
   if (view === "title") {
     const names = root.profiles.map(p => p.name);
     $("t-cont").disabled = !names.length;
@@ -1502,13 +1525,29 @@ const setEvLevel = g => { evGuide = g; $("ev-easy").setAttribute("aria-pressed",
 $("ev-easy").onclick = () => setEvLevel(true);
 $("ev-hard").onclick = () => setEvLevel(false);
 [["ev-hira", "hira"], ["ev-kata", "kata"], ["ev-k1", "k1"]].forEach(([id, key]) => {
-  $(id).onclick = () => { state = newState(); startSession("event", randomItems(key, EVENT_QUESTIONS), { guide: evGuide, title: SETS[key].name }); };
+  $(id).onclick = () => { state = newState(); pickKid(); startSession("event", randomItems(key, EVENT_QUESTIONS), { guide: evGuide, title: SETS[key].name }); };
 });
 document.addEventListener("keydown", e => {
   if ($("app").hidden || sess || e.target.tagName === "INPUT") return;
   if (e.key === "ArrowRight") step(1);
   if (e.key === "ArrowLeft") step(-1);
 });
+
+/* ---------- あたらしい バージョンが あれば よみなおす ----------
+   GitHub Pages は 10ぷん ほど ふるい ページを のこすので、小さい version.json だけ まいかい たしかめる */
+const BUILD_ID = "20261118122417";
+if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
+  fetch("version.json?t=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(v => {
+      if (!v || !v.build || v.build === BUILD_ID) return;
+      // おなじ バージョンで なんども よみなおさないように
+      const key = "reloaded-" + v.build;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); } catch (e) {}
+      if (!sess) location.replace(location.pathname + "?v=" + v.build);
+    })
+    .catch(() => {});
+}
 
 // イベント版は なまえも かえる（はじめの がめん・タブ・ホームがめんに ついかした ときの なまえ）
 const EVENT_TITLE = "たまごを そだてろ！ もじクイズ";
