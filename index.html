@@ -737,8 +737,48 @@ const CHARAS = {
   },
 };
 // つかう すがた：おうち版は 5だんかい、イベント版は 3だんかい（たまご → ちび → おとな）
-const STAGE_MAP = EDITION === "event" ? [0, 2, 3] : [0, 1, 2, 3, 4];
-const buddySvg = stage => CHARAS[CHARA].svg(STAGE_MAP[stage]);
+/* きょうりゅう版の キャラ：ティタ と グノ（イラストは build.ps1 が DINO_IMAGES に いれる）
+   1かいごとに こうたいで でてくる。すがたは たまご → からから かおを だす → おとな の 3だんかい */
+const DINO_IMAGES = /*DINO_IMAGES*/{};
+const DINO_KIDS = [
+  { id: "tita", name: "ティタ", egg: "#fbf1e4", spot: "#e2b48f", line: "#d9b896" },
+  { id: "guno", name: "グノ", egg: "#f7f4e3", spot: "#c9b67c", line: "#cfc59a" },
+];
+const useDinoArt = CHARA === "dino" && !!DINO_IMAGES.tita;
+let kidIdx = Math.floor(Math.random() * DINO_KIDS.length);
+const kid = () => DINO_KIDS[kidIdx];
+// イラストは 1かいだけ よみこんで、あとは <use> で つかいまわす（なんども おなじ がぞうを はりつけない）
+if (useDinoArt) {
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  defs.setAttribute("width", "0"); defs.setAttribute("height", "0"); defs.style.position = "absolute";
+  defs.innerHTML = Object.entries(DINO_IMAGES).map(([k, im]) =>
+    `<symbol id="art-${k}" viewBox="0 0 ${im.w} ${im.h}"><image href="${im.src}" width="${im.w}" height="${im.h}"/></symbol>`).join("");
+  document.body.prepend(defs);
+}
+// はじめの がめんの キャラは すこし おおきく
+if (useDinoArt) {
+  const st = document.createElement("style");
+  st.textContent = ".start-buddy{width:180px;height:180px}.start-buddy svg{width:150px;height:150px}";
+  document.head.append(st);
+}
+function dinoArtSvg(stage) {
+  const k = kid(), shell = `fill="${k.egg}" stroke="${k.line}" stroke-width="2" stroke-linejoin="round"`;
+  const spots = `<circle cx="36" cy="74" r="4.5" fill="${k.spot}"/><circle cx="64" cy="79" r="5.5" fill="${k.spot}"/><circle cx="52" cy="88" r="3" fill="${k.spot}"/>`;
+  if (stage === 0) return `<ellipse cx="50" cy="55" rx="30" ry="38" ${shell}/><ellipse cx="40" cy="36" rx="6" ry="9" fill="#fff" opacity=".7" transform="rotate(-20 40 36)"/><circle cx="38" cy="58" r="5" fill="${k.spot}"/><circle cx="62" cy="40" r="4" fill="${k.spot}"/><circle cx="63" cy="72" r="6" fill="${k.spot}"/><circle cx="42" cy="80" r="3.5" fill="${k.spot}"/>`;
+  if (stage === 1) {
+    // からから かおを だして、あたまに からの かけらが のっている
+    const head = k.id === "tita"
+      ? `<use href="#art-${k.id}_head" x="24" y="13" width="52" height="52"/>`
+      : `<use href="#art-${k.id}_head" x="31" y="9" width="38" height="58"/>`;
+    const capY = k.id === "tita" ? 16 : 12;
+    return head
+      + `<path d="M18 62l8 6 7-7 8 7 7-7 7 7 8-7 7 7 8-6v4q0 30-32 30T18 66z" ${shell}/>${spots}`
+      + `<path d="M33 ${capY}q17-20 34 0l-4 4-4-5-5 5-4-5-4 5-5-5-4 5z" ${shell} transform="rotate(-14 50 ${capY - 4})"/>`;
+  }
+  return `<use href="#art-${k.id}" x="0" y="0" width="100" height="100"/>`;
+}
+const STAGE_MAP = useDinoArt ? [0, 1, 2] : EDITION === "event" ? [0, 2, 3] : [0, 1, 2, 3, 4];
+const buddySvg = stage => useDinoArt ? dinoArtSvg(STAGE_MAP[stage]) : CHARAS[CHARA].svg(STAGE_MAP[stage]);
 if (CHARA === "dino") {
   document.documentElement.style.setProperty("--buddy-bg", "#e3f5d3");
   document.documentElement.style.setProperty("--buddy-ring", "#a9d88d");
@@ -766,9 +806,21 @@ function hiyokoSvg(stage) {
   if (stage === 3) return hen;
   return hen + CROWN;
 }
-const STAGE_NAMES = STAGE_MAP.map(i => CHARAS[CHARA].names[i]);
-const STAGE_MSG = STAGE_MAP.map(i => CHARAS[CHARA].msgs[i]);
-const MAX_STAGE = STAGE_NAMES.length - 1;
+let STAGE_NAMES, STAGE_MSG;
+function applyKid() {
+  if (useDinoArt) {
+    const n = kid().name;
+    STAGE_NAMES = [`${n}の たまご`, `あかちゃん ${n}`, n];
+    STAGE_MSG = ["", `${n}が うまれたよ！`, `${n}に なったよ！`];
+  } else {
+    STAGE_NAMES = STAGE_MAP.map(i => CHARAS[CHARA].names[i]);
+    STAGE_MSG = STAGE_MAP.map(i => CHARAS[CHARA].msgs[i]);
+  }
+}
+applyKid();
+// イベント版：1かい あそぶ ごとに ティタ と グノ が こうたい
+function nextKid() { if (!useDinoArt) return; kidIdx = (kidIdx + 1) % DINO_KIDS.length; applyKid(); }
+const MAX_STAGE = STAGE_MAP.length - 1;
 const levelOf = pts => Math.floor(pts / 100) + 1;
 const level = () => levelOf(state.pts);
 const stageOf = lv => Math.min(lv - 1, MAX_STAGE);
@@ -1254,6 +1306,7 @@ function showResult() {
   resultShownAt = Date.now();
 }
 function endSession() {
+  if (sess && EDITION === "event") nextKid();   // つぎの ひとは もう1ぴきの キャラで
   sess = null;
   clearTimeout(idleTimer);
   $("result").hidden = true;
@@ -1304,8 +1357,10 @@ function showStart(view) {
   clearTimeout(idleTimer);
   if (["menu", "grade", "quiz"].includes(view) && !profile) view = "title";
   VIEWS.forEach(v => { $("v-" + v).hidden = v !== view; });
-  $("startBuddy").innerHTML = buddySvg(stageNow());
-  $("startTotal").textContent = profile ? `いまの レベル：Lv.${level()}（${state.pts}pt）` : "";
+  // イベント版の はじめの がめんは、つぎに でてくる キャラの おとなの すがたを みせる
+  $("startBuddy").innerHTML = buddySvg(EDITION === "event" && useDinoArt ? MAX_STAGE : stageNow());
+  $("startTotal").textContent = profile ? `いまの レベル：Lv.${level()}（${state.pts}pt）`
+    : EDITION === "event" && useDinoArt ? `こんどは ${kid().name} と いっしょに あそぼう！` : "";
   if (view === "title") {
     const names = root.profiles.map(p => p.name);
     $("t-cont").disabled = !names.length;
