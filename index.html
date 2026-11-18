@@ -759,7 +759,9 @@ function pickKid() {
   if (!useDinoArt) return;
   const normal = DINO_KIDS.filter(k => !k.rare);
   const rare = DINO_KIDS.filter(k => k.rare && DINO_IMAGES[k.id]);
-  const k = rare.length && Math.random() < RARE_CHANCE ? pick(rare) : pick(normal);
+  // かくにん用：URL に ?rare=1 を つけると かならず レアキャラが でる
+  const forceRare = new URLSearchParams(location.search).get("rare") === "1";
+  const k = rare.length && (forceRare || Math.random() < RARE_CHANCE) ? pick(rare) : pick(normal);
   kidIdx = DINO_KIDS.indexOf(k);
   applyKid();
 }
@@ -1535,7 +1537,7 @@ document.addEventListener("keydown", e => {
 
 /* ---------- あたらしい バージョンが あれば よみなおす ----------
    GitHub Pages は 10ぷん ほど ふるい ページを のこすので、小さい version.json だけ まいかい たしかめる */
-const BUILD_ID = "20261118123825";
+const BUILD_ID = "20261118124025";
 if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
   fetch("version.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
@@ -1544,7 +1546,9 @@ if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
       // おなじ バージョンで なんども よみなおさないように
       const key = "reloaded-" + v.build;
       try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); } catch (e) {}
-      if (!sess) location.replace(location.pathname + "?v=" + v.build);
+      // ?rare=1 などの ほかの しるしは のこしたまま よみなおす
+      const q = new URLSearchParams(location.search); q.set("v", v.build);
+      if (!sess) location.replace(location.pathname + "?" + q.toString());
     })
     .catch(() => {});
 }
