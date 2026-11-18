@@ -748,7 +748,7 @@ const DINO_KIDS = [
   // レアキャラ：うまれた ときは「ちぃ。ちゃん」、そだつと「あいさきちぃ。」（がぞう chii_adult）
   { id: "chii", name: "ちぃ。ちゃん", baby: "ちぃ。ちゃん", adult: "あいさきちぃ。", adultImg: "chii_adult", egg: "#fdf3f8", spot: "#f3b6d3", line: "#e8c6d6", rare: true },
 ];
-const RARE_CHANCE = 1 / 25;   // レアキャラが でる かくりつ（だいたい 20〜30かいに 1かい）
+const RARE_CHANCE = 1 / 10;   // レアキャラが でる かくりつ（だいたい 10かいに 1かい）
 // たまごの うちは なにが うまれるか わからないように、みんな おなじ いろ
 const MYSTERY_EGG = { egg: "#fbf6ea", spot: "#d9c9a8", line: "#d8cbb0" };
 const useDinoArt = CHARA === "dino" && !!DINO_IMAGES.tita;
@@ -1537,7 +1537,7 @@ document.addEventListener("keydown", e => {
 
 /* ---------- あたらしい バージョンが あれば よみなおす ----------
    GitHub Pages は 10ぷん ほど ふるい ページを のこすので、小さい version.json だけ まいかい たしかめる */
-const BUILD_ID = "20261118124025";
+const BUILD_ID = "20261118124129";
 if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
   fetch("version.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
