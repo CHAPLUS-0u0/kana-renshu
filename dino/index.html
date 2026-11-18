@@ -270,10 +270,11 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 @keyframes hop{30%{transform:translateY(-12px) rotate(-6deg)}60%{transform:translateY(0) rotate(4deg)}}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 @keyframes cheer{20%{transform:translateY(-14px) scale(1.08)}40%{transform:translateY(0)}60%{transform:translateY(-10px) rotate(8deg)}80%{transform:translateY(0) rotate(-4deg)}}
-.bubble{flex:1;min-width:0;background:#fff;border:2px solid #f1d2dc;color:#a32c52;font-weight:700;font-size:16px;line-height:1.5;padding:10px 14px;border-radius:16px;position:relative;margin:0;min-height:72px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center}
+.bubble{flex:1;min-width:0;background:#fff;border:2px solid #f1d2dc;color:#a32c52;font-weight:700;font-size:16px;line-height:1.5;padding:10px 14px;border-radius:16px;position:relative;margin:0;height:92px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center}
+/* ↑ たかさは こてい：セリフの ながさで マスが うえしたに ずれないように（ながい ときは fitBubble() で もじを ちいさく する） */
 .bubble::before{content:"";position:absolute;left:-9px;top:50%;margin-top:-8px;border:8px solid transparent;border-left:0;border-right-color:#f1d2dc}
 .bubble::after{content:"";position:absolute;left:-6px;top:50%;margin-top:-6px;border:6px solid transparent;border-left:0;border-right-color:#fff}
-.bubble .tip{display:block;font-size:13px;color:var(--muted);font-weight:700}
+.bubble .tip{display:block;font-size:.82em;color:var(--muted);font-weight:700}
 .voice{flex:none;border:2px solid #eadbc6;background:#fff;border-radius:999px;padding:6px 10px;font-weight:700;font-size:12px;color:var(--muted)}
 .voice[aria-pressed="true"]{border-color:var(--pink);color:var(--pink)}
 
@@ -325,7 +326,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
   .app{grid-template-columns:minmax(0,1fr);padding:12px;gap:14px;border-radius:22px}
   .stage{order:-1}
   .buddy{width:60px;height:60px}.buddy svg{width:46px;height:46px}
-  .bubble{font-size:14px;padding:8px 12px}
+  .bubble{font-size:14px;padding:8px 12px;height:84px}
   .navchar{font-size:48px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -862,10 +863,20 @@ function say(text, mood, tip = "") {
   $("bubble").innerHTML = "";
   $("bubble").append(text);
   if (tip) { const t = document.createElement("span"); t.className = "tip"; t.textContent = tip; $("bubble").append(t); }
+  fitBubble();
   const b = $("buddy"); b.classList.remove("hop", "shake", "cheer"); void b.offsetWidth;
   if (mood) b.classList.add(mood);
   if (state.voice) speak(text);
 }
+// ふきだしに おさまらない ときだけ、もじを 1pxずつ ちいさく する（たかさは かえない）
+function fitBubble() {
+  const b = $("bubble");
+  b.style.fontSize = "";
+  if (b.offsetParent === null) return;   // かくれている ときは はかれない
+  let fs = parseFloat(getComputedStyle(b).fontSize);
+  while (b.scrollHeight > b.clientHeight + 1 && fs > 11) { fs -= 1; b.style.fontSize = fs + "px"; }
+}
+window.addEventListener("resize", fitBubble);
 function tipFor(i) { return `${i + 1}かくめ：${strokeTip(guidePaths[i])}`; }
 // しばらく かかないと たすけてくれる
 function armIdle() {
