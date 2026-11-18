@@ -572,7 +572,7 @@ const STORE = "hiyoko" === "dino" ? "kana-renshu-dino-v1" : "kana-renshu-v1";
 
 // EDITION も build.ps1 が入れかえる："home"（おうち版：なまえ とうろく・セーブ）/ "event"（イベント版：セーブなし・すぐ こうたい）
 const EDITION = "home".startsWith("__") ? "home" : "home";
-const EVENT_QUESTIONS = 8;     // イベント版の もんだいの かず（2もんごとに 1だん せいちょう）
+const EVENT_QUESTIONS = 8;     // イベント版の もんだいの かず（4もんめで ちび、8もんめで おとなに なる）
 const QUIZ_QUESTIONS = 10;
 
 /* ---------- セーブデータ（おうち版） ----------
@@ -736,7 +736,9 @@ const CHARAS = {
     svg: s => dinoSvg(s),
   },
 };
-const buddySvg = stage => CHARAS[CHARA].svg(stage);
+// つかう すがた：おうち版は 5だんかい、イベント版は 3だんかい（たまご → ちび → おとな）
+const STAGE_MAP = EDITION === "event" ? [0, 2, 3] : [0, 1, 2, 3, 4];
+const buddySvg = stage => CHARAS[CHARA].svg(STAGE_MAP[stage]);
 if (CHARA === "dino") {
   document.documentElement.style.setProperty("--buddy-bg", "#e3f5d3");
   document.documentElement.style.setProperty("--buddy-ring", "#a9d88d");
@@ -764,8 +766,8 @@ function hiyokoSvg(stage) {
   if (stage === 3) return hen;
   return hen + CROWN;
 }
-const STAGE_NAMES = CHARAS[CHARA].names;
-const STAGE_MSG = CHARAS[CHARA].msgs;
+const STAGE_NAMES = STAGE_MAP.map(i => CHARAS[CHARA].names[i]);
+const STAGE_MSG = STAGE_MAP.map(i => CHARAS[CHARA].msgs[i]);
 const MAX_STAGE = STAGE_NAMES.length - 1;
 const levelOf = pts => Math.floor(pts / 100) + 1;
 const level = () => levelOf(state.pts);
@@ -1220,7 +1222,7 @@ async function finishInSession(perfect, beforeLv) {
   if (!sess) return;
   const next = () => { if (!sess) return; sess.at++; if (sess.at >= sess.items.length) showResult(); else loadQuestion(); };
   if (EDITION === "event") {
-    // 2もん ごとに 1だん そだつ。さいごの もんだいで おうさまに なる
+    // もんだいの すすみぐあいに あわせて そだつ。さいごの もんだいで いちばん うえの すがたに なる
     const st = Math.min(MAX_STAGE, Math.floor(doneN * MAX_STAGE / sess.items.length));
     if (st > sess.stage) { const from = sess.stage; sess.stage = st; renderLevel(); renderSess(); return showEvolve(from, st, next); }
     return next();
