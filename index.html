@@ -28,6 +28,8 @@ img{max-width:100%}
   --blue:#3d6fd8;        /* もじの いろ */
   --green:#3a9d6a;       /* かんじ */
   --yellow:#ffd34d;
+  --buddy-bg:#ffe9a8;    /* なかまの まるい はいけい */
+  --buddy-ring:#f5d77a;
   --muted:#9a8b7a;
   --red:#e2463b;         /* はなまる */
   --font-ui:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic UI",sans-serif;
@@ -42,7 +44,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 /* ===== スタートがめん ===== */
 .start{min-height:100%;display:grid;place-items:center}
 .start-in{max-width:720px;width:100%;background:#fbf1e3;border-radius:28px;padding:32px 20px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 1px 0 #fff inset,0 10px 30px rgba(140,100,60,.12)}
-.start-buddy{width:120px;height:120px;border-radius:50%;background:#ffe9a8;display:grid;place-items:center;border:5px solid #fff;box-shadow:0 0 0 2px #f5d77a;animation:bob 2.4s ease-in-out infinite}
+.start-buddy{width:120px;height:120px;border-radius:50%;background:var(--buddy-bg);display:grid;place-items:center;border:5px solid #fff;box-shadow:0 0 0 2px var(--buddy-ring);animation:bob 2.4s ease-in-out infinite}
 .start-buddy svg{width:94px;height:94px}
 @keyframes bob{50%{transform:translateY(-8px)}}
 .logo{margin:0;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;font-family:var(--font-kyokasho);font-weight:600;font-size:clamp(34px,8vw,56px);line-height:1.1}
@@ -137,7 +139,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .lvcard{position:relative;overflow:hidden;background:var(--paper);border-radius:28px;padding:28px 24px 24px;width:min(100%,420px);box-sizing:border-box;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;animation:pop .5s cubic-bezier(.3,1.6,.5,1);border:5px solid var(--yellow)}
 .lvtag{margin:0;font-weight:900;font-size:clamp(28px,8vw,40px);color:var(--pink);letter-spacing:.04em;text-shadow:0 3px 0 #ffd9e3}
 .evolve{display:flex;align-items:center;gap:10px}
-.ev{width:96px;height:96px;border-radius:50%;background:#ffe9a8;display:grid;place-items:center;border:4px solid #fff;box-shadow:0 0 0 2px #f5d77a}
+.ev{width:96px;height:96px;border-radius:50%;background:var(--buddy-bg);display:grid;place-items:center;border:4px solid #fff;box-shadow:0 0 0 2px var(--buddy-ring)}
 .ev svg{width:76px;height:76px}
 .ev.from{opacity:.55;transform:scale(.8)}
 .ev.to{animation:evo 1.2s ease .3s both}
@@ -155,7 +157,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 /* マスの大きさ：はば と たかさ の どちらにも おさまるように（iPad よこむき で したが きれないように） */
 .stage{--pw:min(100%,560px,max(260px,calc(100vh - 300px)));--pw:min(100%,560px,max(260px,calc(100dvh - 300px)))}
 .coach{width:var(--pw);display:flex;align-items:center;gap:12px}
-.buddy{width:76px;height:76px;flex:none;border-radius:50%;background:#ffe9a8;display:grid;place-items:center;border:4px solid #fff;box-shadow:0 0 0 2px #f5d77a}
+.buddy{width:76px;height:76px;flex:none;border-radius:50%;background:var(--buddy-bg);display:grid;place-items:center;border:4px solid #fff;box-shadow:0 0 0 2px var(--buddy-ring)}
 .buddy svg{width:60px;height:60px}
 .buddy.hop svg{animation:hop .6s ease}
 .buddy.shake svg{animation:shake .4s ease}
@@ -384,7 +386,8 @@ for (const k of ["k1", "k2", "k3", "k4", "k5", "k6"]) if (SETS[k].chars.length !
 const GRADES = [1, 2, 3, 4, 5, 6];
 const NS = "http://www.w3.org/2000/svg";
 const $ = id => document.getElementById(id);
-const STORE = "kana-renshu-v1";
+// ひよこ版と きょうりゅう版は 同じサイトに おくので、きろくの なまえを わけて まざらないようにする
+const STORE = "hiyoko" === "dino" ? "kana-renshu-dino-v1" : "kana-renshu-v1";
 
 let state = { mode: "hira", pos: {}, pts: 0, cleared: {}, voice: true, kview: "yomi" };
 try { Object.assign(state, JSON.parse(localStorage.getItem(STORE)) || {}); } catch (e) {}
@@ -490,18 +493,51 @@ const readOf = c => {
   return (kun || on).split("・")[0].replace(/[()]/g, "");
 };
 
-/* ---------- なかま（たまご → ひよこ → にわとり） ---------- */
-function buddySvg(stage) {
-  const face = (y, c = "#4a3b2c") => `<circle cx="42" cy="${y}" r="3.2" fill="${c}"/><circle cx="58" cy="${y}" r="3.2" fill="${c}"/><ellipse cx="35" cy="${y+7}" rx="4.5" ry="2.6" fill="#ffb3c1"/><ellipse cx="65" cy="${y+7}" rx="4.5" ry="2.6" fill="#ffb3c1"/>`;
+/* ---------- なかま ----------
+   CHARA は build.ps1 が入れかえる："hiyoko"（たまご → ひよこ → にわとり）/ "dino"（たまご → きょうりゅう） */
+const CHARA = "hiyoko".startsWith("__") ? "hiyoko" : "hiyoko";
+const CHARAS = {
+  hiyoko: {
+    names: ["たまご", "われかけ たまご", "ひよこ", "にわとり", "おうさま にわとり"],
+    msgs: ["", "たまごに ひびが はいったよ！", "ひよこが うまれたよ！", "にわとりに なったよ！", "おうさまに なったよ！"],
+    svg: s => hiyokoSvg(s),
+  },
+  dino: {
+    names: ["たまご", "われかけ たまご", "ちびきょうりゅう", "きょうりゅう", "おうさま きょうりゅう"],
+    msgs: ["", "たまごに ひびが はいったよ！", "ちびきょうりゅうが うまれたよ！", "きょうりゅうに なったよ！", "おうさまに なったよ！"],
+    svg: s => dinoSvg(s),
+  },
+};
+const buddySvg = stage => CHARAS[CHARA].svg(stage);
+if (CHARA === "dino") {
+  document.documentElement.style.setProperty("--buddy-bg", "#e3f5d3");
+  document.documentElement.style.setProperty("--buddy-ring", "#a9d88d");
+}
+const faceSvg = (y, c = "#4a3b2c") => `<circle cx="42" cy="${y}" r="3.2" fill="${c}"/><circle cx="58" cy="${y}" r="3.2" fill="${c}"/><ellipse cx="35" cy="${y+7}" rx="4.5" ry="2.6" fill="#ffb3c1"/><ellipse cx="65" cy="${y+7}" rx="4.5" ry="2.6" fill="#ffb3c1"/>`;
+const CROWN = `<path d="M34 26l3-17 8 8 5-11 5 11 8-8 3 17z" fill="#ffd34d" stroke="#e0a800" stroke-width="1.5" stroke-linejoin="round"/><circle cx="50" cy="20" r="2.5" fill="#e8577e"/>`;
+
+function dinoSvg(stage) {
+  const G = "#6cbf4f", GD = "#4f9a37", BELLY = "#e9f7c8", SPIKE = "#ff9a3c", SHELL = "#f3fbe9", SHELL_LINE = "#b9d9a0", SPOT = "#bfe3a5";
+  const smile = (y, w = 4) => `<path d="M${50 - w} ${y}q${w} ${w} ${w * 2} 0" stroke="#4a3b2c" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  if (stage === 0) return `<ellipse cx="50" cy="55" rx="30" ry="38" fill="${SHELL}" stroke="${SHELL_LINE}" stroke-width="2"/><circle cx="38" cy="32" r="5" fill="${SPOT}"/><circle cx="63" cy="36" r="3.5" fill="${SPOT}"/><circle cx="65" cy="72" r="6" fill="${SPOT}"/><circle cx="34" cy="76" r="4" fill="${SPOT}"/>${faceSvg(52)}${smile(63)}`;
+  if (stage === 1) return `<circle cx="50" cy="36" r="17" fill="${G}"/><circle cx="44" cy="35" r="3" fill="#4a3b2c"/><circle cx="56" cy="35" r="3" fill="#4a3b2c"/><path d="M36 25q14-16 28 0l-5 3-4-5-5 5-5-5-4 5z" fill="${SHELL}" stroke="${SHELL_LINE}" stroke-width="2" stroke-linejoin="round"/><path d="M20 50l8 6 7-7 8 7 7-7 7 7 8-7 7 7 8-6v8q0 35-30 35T20 58z" fill="${SHELL}" stroke="${SHELL_LINE}" stroke-width="2" stroke-linejoin="round"/><circle cx="36" cy="72" r="4.5" fill="${SPOT}"/><circle cx="64" cy="76" r="5.5" fill="${SPOT}"/>`;
+  if (stage === 2) return `<path d="M31 32l5-14 6 9 8-15 8 15 6-9 5 14z" fill="${SPIKE}"/><circle cx="50" cy="48" r="24" fill="${G}"/><ellipse cx="50" cy="56" rx="12" ry="9" fill="${BELLY}"/>${faceSvg(43)}<circle cx="46" cy="54" r="1.3" fill="${GD}"/><circle cx="54" cy="54" r="1.3" fill="${GD}"/>${smile(58)}<path d="M20 66l8-6 7 7 8-7 7 7 7-7 8 7 7-7 8 6v6q0 22-30 22T20 72z" fill="${SHELL}" stroke="${SHELL_LINE}" stroke-width="2" stroke-linejoin="round"/>`;
+  const dino = `<path d="M70 70q22 4 24-14q-3 13-24 4z" fill="${G}"/><path d="M28 34l5-13 6 9 6-14 6 14 6-9 5 13z" fill="${SPIKE}"/><ellipse cx="50" cy="60" rx="26" ry="29" fill="${G}"/><ellipse cx="50" cy="70" rx="15" ry="16" fill="${BELLY}"/>${faceSvg(46)}${smile(55, 6)}<path d="M28 64q-6 2-7 8M72 64q6 2 7 8" stroke="${GD}" stroke-width="4" stroke-linecap="round" fill="none"/><ellipse cx="38" cy="89" rx="8" ry="4" fill="${GD}"/><ellipse cx="62" cy="89" rx="8" ry="4" fill="${GD}"/>`;
+  if (stage === 3) return dino;
+  return dino + CROWN;
+}
+
+function hiyokoSvg(stage) {
+  const face = faceSvg = (y, c = "#4a3b2c") => `<circle cx="42" cy="${y}" r="3.2" fill="${c}"/><circle cx="58" cy="${y}" r="3.2" fill="${c}"/><ellipse cx="35" cy="${y+7}" rx="4.5" ry="2.6" fill="#ffb3c1"/><ellipse cx="65" cy="${y+7}" rx="4.5" ry="2.6" fill="#ffb3c1"/>`;
   if (stage === 0) return `<ellipse cx="50" cy="55" rx="30" ry="38" fill="#fffaf0" stroke="#e9d5b0" stroke-width="2"/><circle cx="36" cy="30" r="4" fill="#f4dfb8"/><circle cx="66" cy="72" r="5" fill="#f4dfb8"/>${face(52)}<path d="M46 63q4 4 8 0" stroke="#4a3b2c" stroke-width="2" fill="none" stroke-linecap="round"/>`;
   if (stage === 1) return `<ellipse cx="50" cy="55" rx="30" ry="38" fill="#fffaf0" stroke="#e9d5b0" stroke-width="2"/><path d="M22 42l9 6 7-8 8 9 8-9 8 8 8-7 8 6" stroke="#c9a46a" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="50" cy="26" r="9" fill="#ffd34d"/>${face(58)}<path d="M46 68q4 4 8 0" stroke="#4a3b2c" stroke-width="2" fill="none" stroke-linecap="round"/>`;
   if (stage === 2) return `<circle cx="50" cy="48" r="28" fill="#ffd34d"/><path d="M48 20q2-8 7-6-4 1-3 6" fill="#ffc21a"/>${face(44)}<path d="M45 53l5 6 5-6z" fill="#ff9a3c"/><path d="M20 66l8-6 7 7 8-7 7 7 7-7 8 7 7-7 8 6v6q0 22-30 22T20 72z" fill="#fffaf0" stroke="#e9d5b0" stroke-width="2"/>`;
   const hen = `<path d="M50 10q6 0 6 8 6-6 10 0-2 6-8 8z" fill="#ef4b4b"/><ellipse cx="50" cy="56" rx="30" ry="32" fill="#fff" stroke="#eee1cf" stroke-width="2"/><path d="M76 50q14-6 12 10-6-4-10 0" fill="#fff" stroke="#eee1cf" stroke-width="2"/>${face(46)}<path d="M45 55l5 7 5-7z" fill="#ff9a3c"/><path d="M48 63q2 6 4 0" fill="#ef4b4b"/><path d="M40 88v6M60 88v6" stroke="#ff9a3c" stroke-width="3" stroke-linecap="round"/>`;
   if (stage === 3) return hen;
-  return hen + `<path d="M34 26l3-17 8 8 5-11 5 11 8-8 3 17z" fill="#ffd34d" stroke="#e0a800" stroke-width="1.5" stroke-linejoin="round"/><circle cx="50" cy="20" r="2.5" fill="#e8577e"/>`;
+  return hen + CROWN;
 }
-const STAGE_NAMES = ["たまご", "われかけ たまご", "ひよこ", "にわとり", "おうさま にわとり"];
-const STAGE_MSG = ["", "たまごに ひびが はいったよ！", "ひよこが うまれたよ！", "にわとりに なったよ！", "おうさまに なったよ！"];
+const STAGE_NAMES = CHARAS[CHARA].names;
+const STAGE_MSG = CHARAS[CHARA].msgs;
 const MAX_STAGE = STAGE_NAMES.length - 1;
 const levelOf = pts => Math.floor(pts / 100) + 1;
 const level = () => levelOf(state.pts);
