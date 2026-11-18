@@ -741,8 +741,8 @@ const CHARAS = {
    1かいごとに こうたいで でてくる。すがたは たまご → からから かおを だす → おとな の 3だんかい */
 const DINO_IMAGES = /*DINO_IMAGES*/{};
 const DINO_KIDS = [
-  { id: "tita", name: "ティタ", egg: "#fbf1e4", spot: "#e2b48f", line: "#d9b896" },
-  { id: "guno", name: "グノ", egg: "#f7f4e3", spot: "#c9b67c", line: "#cfc59a" },
+  { id: "tita", name: "ティタ", egg: "#f7f4e3", spot: "#c9b67c", line: "#cfc59a" },   // くびの ながい こ
+  { id: "guno", name: "グノ", egg: "#fbf1e4", spot: "#e2b48f", line: "#d9b896" },     // ちゃいろで しょうめんを むいている こ
 ];
 const useDinoArt = CHARA === "dino" && !!DINO_IMAGES.tita;
 let kidIdx = Math.floor(Math.random() * DINO_KIDS.length);
@@ -767,10 +767,12 @@ function dinoArtSvg(stage) {
   if (stage === 0) return `<ellipse cx="50" cy="55" rx="30" ry="38" ${shell}/><ellipse cx="40" cy="36" rx="6" ry="9" fill="#fff" opacity=".7" transform="rotate(-20 40 36)"/><circle cx="38" cy="58" r="5" fill="${k.spot}"/><circle cx="62" cy="40" r="4" fill="${k.spot}"/><circle cx="63" cy="72" r="6" fill="${k.spot}"/><circle cx="42" cy="80" r="3.5" fill="${k.spot}"/>`;
   if (stage === 1) {
     // からから かおを だして、あたまに からの かけらが のっている
-    const head = k.id === "tita"
+    // かおの がぞうが ましかくに ちかい（グノ）か、たてながか（ティタ）で おきかたを かえる
+    const im = DINO_IMAGES[k.id + "_head"], wide = im.w / im.h > .8;
+    const head = wide
       ? `<use href="#art-${k.id}_head" x="24" y="13" width="52" height="52"/>`
       : `<use href="#art-${k.id}_head" x="31" y="9" width="38" height="58"/>`;
-    const capY = k.id === "tita" ? 16 : 12;
+    const capY = wide ? 16 : 12;
     return head
       + `<path d="M18 62l8 6 7-7 8 7 7-7 7 7 8-7 7 7 8-6v4q0 30-32 30T18 66z" ${shell}/>${spots}`
       + `<path d="M33 ${capY}q17-20 34 0l-4 4-4-5-5 5-4-5-4 5-5-5-4 5z" ${shell} transform="rotate(-14 50 ${capY - 4})"/>`;
