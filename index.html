@@ -204,6 +204,40 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .mini{width:34px;height:34px;flex:none;border-radius:50%;background:#f3e8d8;display:grid;place-items:center}
 .mini svg{width:28px;height:28px;filter:brightness(0) opacity(.22)}
 
+/* せいちょう の えんしゅつ（キャラが 主役）
+   ながれ：charge（ぷるぷる ひかる）→ flash（まっしろ）→ reveal（あたらしい すがたが どーん） */
+.evo{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;text-align:center;padding:16px;box-sizing:border-box;
+  background:radial-gradient(circle at 50% 46%,#fffdf5 0%,var(--buddy-bg) 42%,var(--buddy-ring) 100%)}
+.evo-rays{position:absolute;left:50%;top:46%;width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;pointer-events:none;opacity:0;
+  background:repeating-conic-gradient(rgba(255,255,255,.55) 0deg 9deg,rgba(255,255,255,0) 9deg 22deg);transition:opacity .6s}
+.evo.reveal .evo-rays{opacity:1;animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.evo-chara{position:relative;width:min(58vmin,400px);aspect-ratio:1;max-width:100%;display:grid;place-items:center}
+.evo-chara::before{content:"";position:absolute;inset:6%;border-radius:50%;background:rgba(255,255,255,.75);box-shadow:0 0 60px 20px rgba(255,255,255,.7)}
+.evo-chara svg{position:relative;width:86%;height:86%;filter:drop-shadow(0 10px 12px rgba(90,60,20,.25))}
+.evo.charge .evo-chara svg{animation:wobble .18s ease-in-out infinite,glow 1.6s ease-in forwards}
+@keyframes wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes glow{to{filter:brightness(2.2) drop-shadow(0 0 30px #fff)}}
+.evo.reveal .evo-chara svg{animation:popin 1s cubic-bezier(.25,1.7,.45,1) both,float 2.6s ease-in-out 1s infinite}
+@keyframes popin{0%{transform:scale(.2);filter:brightness(3)}60%{transform:scale(1.12);filter:brightness(1.3)}100%{transform:scale(1)}}
+@keyframes float{50%{transform:translateY(-10px)}}
+.evo.flash::after{content:"";position:fixed;inset:0;background:#fff;pointer-events:none;animation:flash .8s ease-out forwards}
+@keyframes flash{from{opacity:1}to{opacity:0}}
+.evo-tag{position:relative;margin:0;font-weight:900;font-size:clamp(26px,6vw,44px);color:var(--pink);text-shadow:0 3px 0 #fff,0 0 18px #fff}
+.evo-name{position:relative;margin:0;font-weight:900;font-size:clamp(30px,7.5vw,60px);line-height:1.15;color:var(--ink);text-shadow:0 4px 0 #fff,0 0 24px #fff;opacity:0}
+.evo.reveal .evo-name{animation:namein .6s .5s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes namein{from{opacity:0;transform:translateY(20px) scale(.8)}to{opacity:1;transform:none}}
+.evo-msg{position:relative;margin:0;font-weight:700;font-size:clamp(15px,3.2vw,20px);opacity:0}
+.evo.reveal .evo-msg{animation:namein .5s .9s ease forwards}
+.evo-ok{position:relative;font-size:20px;padding:14px 36px;margin-top:8px}
+.evo-spark{position:absolute;inset:0;pointer-events:none}
+.evo-spark i{position:absolute;top:-14px;width:10px;height:14px;border-radius:3px;animation:fallfar 3s linear forwards}
+@keyframes fallfar{to{transform:translateY(115vh) rotate(720deg)}}
+@media (prefers-reduced-motion:reduce){.evo-name,.evo-msg{opacity:1}}
+.evo-spark b{position:absolute;color:#fff;font-size:28px;text-shadow:0 0 10px #ffd34d;animation:twinkle 1.4s ease-in-out infinite}
+@keyframes twinkle{0%,100%{transform:scale(.4);opacity:.2}50%{transform:scale(1.2);opacity:1}}
+#result .ev{width:170px;height:170px}
+#result .ev svg{width:140px;height:140px}
 .lvup{position:fixed;inset:0;z-index:20;background:rgba(70,50,30,.45);display:grid;place-items:center;padding:16px;box-sizing:border-box;overflow:auto}
 
 /* レベルアップ */
@@ -471,19 +505,15 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
   </main>
 </div>
 
-<div class="lvup" id="lvup" hidden role="dialog" aria-modal="true" aria-labelledby="lvTag">
-  <div class="lvcard">
-    <div class="confetti" id="confetti" aria-hidden="true"></div>
-    <p class="lvtag" id="lvTag">レベルアップ！</p>
-    <div class="evolve">
-      <span class="ev from"><svg id="lvFrom" viewBox="0 0 100 100"></svg></span>
-      <span class="arrow">›</span>
-      <span class="ev to"><svg id="lvTo" viewBox="0 0 100 100"></svg></span>
-    </div>
-    <p class="lvbig" id="lvBig"></p>
-    <p class="lvmsg" id="lvMsg"></p>
-    <button class="btn go" id="lvOk">やったー！</button>
-  </div>
+<!-- せいちょう：がめん いっぱいに キャラを だす -->
+<div class="evo" id="evo" hidden role="dialog" aria-modal="true" aria-labelledby="evoTag">
+  <div class="evo-rays" aria-hidden="true"></div>
+  <div class="evo-spark" id="evoSpark" aria-hidden="true"></div>
+  <p class="evo-tag" id="evoTag">…あれ？</p>
+  <div class="evo-chara"><svg id="evoSvg" viewBox="0 0 100 100"></svg></div>
+  <p class="evo-name" id="evoName"></p>
+  <p class="evo-msg" id="evoMsg"></p>
+  <button class="btn go evo-ok" id="evoOk" hidden>やったー！</button>
 </div>
 
 <div class="lvup" id="result" hidden role="dialog" aria-modal="true" aria-labelledby="resTitle">
@@ -760,47 +790,60 @@ function renderLevel(gained = 0) {
     : `<span>Lv.${level() + 1}まで あと <b>${left}</b>pt</span>`;
   $("buddySvg").innerHTML = buddySvg(st);
 }
-function showLevelUp(fromLv, toLv) {
-  const a = stageOf(fromLv), b = stageOf(toLv);
-  $("lvFrom").innerHTML = buddySvg(a);
-  $("lvTo").innerHTML = buddySvg(b);
-  $("lvBig").textContent = `Lv.${fromLv} → Lv.${toLv}`;
-  $("lvMsg").textContent = b > a ? STAGE_MSG[b] : "もっと つよく なったよ！";
-  const cf = $("confetti"); cf.innerHTML = "";
-  const colors = ["#e8577e", "#3d6fd8", "#ffd34d", "#3a9d6a", "#ff9a3c"];
-  for (let i = 0; i < 36; i++) {
-    const p = document.createElement("i");
-    p.style.left = Math.random() * 100 + "%";
-    p.style.background = colors[i % colors.length];
-    p.style.animationDelay = Math.random() * .8 + "s";
-    cf.append(p);
-  }
-  $("lvup").hidden = false;
-  tone([523, 659, 784, 1047, 1319], "triangle", .13);
-  if (state.voice) setTimeout(() => speak("レベルアップ！ " + $("lvMsg").textContent), 400);
-  $("lvOk").focus();
+/* ---------- せいちょう（レベルアップ・へんしん） ----------
+   がめん いっぱいに キャラを だす。opts.auto なら ボタンなしで じどうで とじる */
+let afterLvUp = null, evoTimers = [];
+function showGrow(a, b, opts = {}) {
+  const evo = $("evo"), changed = b > a;
+  evoTimers.forEach(clearTimeout); evoTimers = [];
+  const later = (ms, f) => evoTimers.push(setTimeout(f, ms));
+  $("evoSvg").innerHTML = buddySvg(a);
+  $("evoTag").textContent = changed ? "…あれ？ ようすが へん！" : "レベルアップ！";
+  $("evoName").textContent = changed ? `${STAGE_NAMES[b]}に なった！` : (opts.big || "");
+  $("evoMsg").textContent = opts.sub || "";
+  $("evoOk").hidden = true;
+  $("evoSpark").innerHTML = "";
+  evo.className = "evo charge";
+  evo.hidden = false;
+  tone([392, 440, 494, 523, 587, 659], "sine", .16);
+  const reveal = () => {
+    $("evoSvg").innerHTML = buddySvg(b);
+    evo.className = "evo flash reveal";
+    $("evoTag").textContent = changed ? "へんしん！" : "レベルアップ！";
+    const sp = $("evoSpark"), colors = ["#e8577e", "#3d6fd8", "#ffd34d", "#3a9d6a", "#ff9a3c"];
+    for (let i = 0; i < 46; i++) {
+      const q = document.createElement("i");
+      q.style.left = Math.random() * 100 + "%"; q.style.background = colors[i % colors.length]; q.style.animationDelay = Math.random() * 1.2 + "s";
+      sp.append(q);
+    }
+    for (let i = 0; i < 10; i++) {
+      const s = document.createElement("b"); s.textContent = "\u2726";
+      s.style.left = 8 + Math.random() * 84 + "%"; s.style.top = 8 + Math.random() * 70 + "%"; s.style.animationDelay = Math.random() * 1.4 + "s";
+      sp.append(s);
+    }
+    tone([523, 659, 784, 1047, 1319, 1568], "triangle", .12);
+    if (state.voice) later(500, () => speak(changed ? `${STAGE_NAMES[b]}に なった！` : "レベルアップ！"));
+    if (opts.auto) later(3600, closeGrow);
+    else later(1200, () => { $("evoOk").hidden = false; $("evoOk").focus(); });
+  };
+  // すがたが かわる ときは ためてから へんしん、かわらない ときは すぐ
+  if (changed) later(1700, reveal); else reveal();
+  afterLvUp = opts.then || null;
 }
-// レベルアップ画面を とじたあとに やること（クイズの つづき など）
-let afterLvUp = null;
-$("lvOk").onclick = () => {
-  $("lvup").hidden = true;
+function closeGrow() {
+  evoTimers.forEach(clearTimeout); evoTimers = [];
+  $("evo").hidden = true; $("evo").className = "evo";
   const f = afterLvUp; afterLvUp = null;
   if (f) f(); else say("これからも いっしょに がんばろう！", "cheer");
-};
-// イベント版：とちゅうで すがたが かわる（ボタンなしで じどうで とじる）
-function showEvolve(a, b, then) {
-  $("lvFrom").innerHTML = buddySvg(a);
-  $("lvTo").innerHTML = buddySvg(b);
-  $("lvTag").textContent = "へんしん！";
-  $("lvBig").textContent = "";
-  $("lvMsg").textContent = STAGE_MSG[b];
-  $("lvOk").hidden = true;
-  $("confetti").innerHTML = "";
-  $("lvup").hidden = false;
-  tone([523, 659, 784, 1047], "triangle", .12);
-  if (state.voice) speak($("lvMsg").textContent);
-  setTimeout(() => { $("lvup").hidden = true; $("lvOk").hidden = false; $("lvTag").textContent = "レベルアップ！"; then(); }, 2200);
 }
+$("evoOk").onclick = closeGrow;
+// おうち版：レベルアップ（ポイントで そだつ）
+function showLevelUp(fromLv, toLv, then) {
+  const a = stageOf(fromLv), b = stageOf(toLv);
+  showGrow(a, b, { big: `Lv.${toLv}`, sub: b > a ? `Lv.${fromLv} → Lv.${toLv}` : "もっと つよく なったよ！", then });
+}
+// イベント版：とちゅうの へんしん（じどうで つぎの もんだいへ）
+function showEvolve(a, b, then) { showGrow(a, b, { auto: true, sub: "このまま つぎの もじも かこう！", then }); }
 
 /* ---------- おうえん ---------- */
 const PRAISE = ["じょうず！", "いいね！", "そのちょうし！", "きれいに かけたね！", "ばっちり！", "すごい！"];
@@ -830,7 +873,7 @@ function armIdle() {
   if (stroke >= guidePaths.length) return;
   const s = stroke;
   idleTimer = setTimeout(() => {
-    if (busy || drawing || stroke !== s || !$("lvup").hidden) return;
+    if (busy || drawing || stroke !== s || !$("evo").hidden) return;
     if (noGuide()) { charMisses++; $("board").classList.add("showmark"); }   // たすけて もらったら まちがい あつかい
     say("いっしょに かこう！ ピンクの まるから だよ", "hop", tipFor(stroke));
     hint();
@@ -983,9 +1026,10 @@ const endDraw = () => {
     tone([660 + stroke * 60], "triangle", .1);
     updateStroke();
     // おてほんなしの ときは、つぎの かきかたを いわない（こたえに なるので）
+    // さいごの 画を かきおわった ときは「つぎの 画」が ないので、ここで ひとこと を つくらない
+    if (stroke >= guidePaths.length) { finish(); return; }
     const tip = noGuide() ? "" : tipFor(stroke);
-    if (stroke >= guidePaths.length) finish();
-    else if (stroke === guidePaths.length - 1) say("あと ひとつ！ がんばれ！", "hop", tip);
+    if (stroke === guidePaths.length - 1) say("あと ひとつ！ がんばれ！", "hop", tip);
     else say(pick(PRAISE), "hop", tip);
   } else {
     misses++; charMisses++;
@@ -1170,7 +1214,7 @@ async function finishInSession(perfect, beforeLv) {
     if (st > sess.stage) { const from = sess.stage; sess.stage = st; renderLevel(); renderSess(); return showEvolve(from, st, next); }
     return next();
   }
-  if (level() > beforeLv) { afterLvUp = next; return showLevelUp(beforeLv, level()); }
+  if (level() > beforeLv) return showLevelUp(beforeLv, level(), next);
   next();
 }
 function showResult() {
@@ -1199,7 +1243,9 @@ function showResult() {
 function endSession() {
   sess = null;
   clearTimeout(idleTimer);
-  $("result").hidden = true; $("lvup").hidden = true;
+  $("result").hidden = true;
+  evoTimers.forEach(clearTimeout); evoTimers = []; afterLvUp = null;
+  $("evo").hidden = true; $("evo").className = "evo";
   $("app").classList.remove("in-session", "event");
   $("sess").hidden = true;
   $("back").textContent = "‹ もどる";
