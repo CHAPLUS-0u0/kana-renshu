@@ -837,7 +837,8 @@ function applyKid() {
     const n = kid().name;
     const baby = kid().baby || `あかちゃん ${n}`, adult = kid().adult || n;
     STAGE_NAMES = ["ふしぎな たまご", baby, adult];
-    STAGE_MSG = ["", `${kid().baby || n}が うまれたよ！`, `${adult}に なったよ！`];
+    // とちゅうでは なまえを いわない（さいごの せいちょうで はじめて わかる）
+    STAGE_MSG = ["", "なにかが かおを だした！", `${adult}に なったよ！`];
   } else {
     STAGE_NAMES = STAGE_MAP.map(i => CHARAS[CHARA].names[i]);
     STAGE_MSG = STAGE_MAP.map(i => CHARAS[CHARA].msgs[i]);
@@ -888,9 +889,9 @@ function showGrow(a, b, opts = {}) {
   const reveal = () => {
     $("evoSvg").innerHTML = buddySvg(b);
     evo.className = "evo flash reveal";
-    // レアキャラが うまれた ときは とくべつに
-    const rareBorn = useDinoArt && kid().rare && a === 0;
-    $("evoTag").textContent = rareBorn ? "レアキャラ だ！" : changed ? (useDinoArt && a === 0 ? "うまれた！" : "へんしん！") : "レベルアップ！";
+    // レアキャラは さいごの せいちょうで なまえと いっしょに わかる
+    const rareBorn = useDinoArt && kid().rare && b === MAX_STAGE;
+    $("evoTag").textContent = rareBorn ? "レアキャラ だ！" : changed ? (useDinoArt && a === 0 ? "…！？" : "へんしん！") : "レベルアップ！";
     if (rareBorn) tone([784, 988, 1175, 1568, 1976], "triangle", .1);
     const sp = $("evoSpark"), colors = ["#e8577e", "#3d6fd8", "#ffd34d", "#3a9d6a", "#ff9a3c"];
     for (let i = 0; i < 46; i++) {
@@ -1537,7 +1538,7 @@ document.addEventListener("keydown", e => {
 
 /* ---------- あたらしい バージョンが あれば よみなおす ----------
    GitHub Pages は 10ぷん ほど ふるい ページを のこすので、小さい version.json だけ まいかい たしかめる */
-const BUILD_ID = "20261118124300";
+const BUILD_ID = "20261125090548";
 if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
   fetch("version.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
