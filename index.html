@@ -113,6 +113,33 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .lvsel button{display:flex;flex-direction:column;align-items:center;font-size:17px;font-weight:900;padding:10px 8px}
 .lvsel button small{font-size:11px;font-weight:700;color:var(--muted)}
 
+/* ずかん */
+.zmode .start-buddy,.zmode .logo,.zmode #startTotal{display:none}
+.zukanbtn{border:0;border-radius:999px;padding:12px 30px;font-weight:900;font-size:18px;background:#6b4a2e;color:#fff;box-shadow:0 4px 0 #4a321e}
+.zukanbtn:active{transform:translateY(3px);box-shadow:none}
+.zgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:100%}
+.zcard{border:0;border-radius:20px;background:#fff;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 4px 0 #eadbc6;position:relative}
+.zcard .pic{width:100%;aspect-ratio:1;max-width:160px;border-radius:50%;background:var(--buddy-bg);display:grid;place-items:center}
+.zcard .pic svg{width:90%;height:90%}
+.zcard b{font-size:17px;font-weight:900}
+.zcard small{font-size:11px;color:var(--muted);font-weight:700;line-height:1.3}
+.zcard.locked .pic{background:#efe6d8}
+.zcard .q{font-size:clamp(48px,9vw,72px);font-weight:900;color:#c4b5a0}
+.zcard .rare{position:absolute;top:8px;right:8px;background:var(--pink);color:#fff;font-size:11px;font-weight:900;border-radius:999px;padding:2px 8px}
+.zcard .got{position:absolute;top:8px;left:8px;color:var(--red);font-size:12px;font-weight:900}
+@media (max-width:480px){.zgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.zdetail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px;width:100%;align-items:center;text-align:left}
+@media (max-width:640px){.zdetail{grid-template-columns:minmax(0,1fr)}}
+.zbig{width:100%;aspect-ratio:1;max-width:360px;margin:0 auto;border-radius:50%;background:var(--buddy-bg);display:grid;place-items:center;border:5px solid #fff;box-shadow:0 0 0 2px var(--buddy-ring)}
+.zbig svg{width:90%;height:90%}
+.zname{margin:0;font-weight:900;font-size:clamp(28px,6vw,40px)}
+.zreal{margin:2px 0 10px;font-weight:700;font-size:15px;color:#6b4a2e}
+.zfacts{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;font-weight:700;font-size:15px;line-height:1.6}
+.zstages{display:flex;align-items:center;gap:6px;margin-top:14px}
+.zstages span{width:64px;height:64px;border-radius:50%;background:var(--buddy-bg);display:grid;place-items:center}
+.zstages span svg{width:54px;height:54px}
+.zstages i{font-style:normal;font-weight:900;color:var(--muted)}
+
 /* クイズ・ふくしゅう・イベント の パネル */
 .sess{display:flex;flex-direction:column;gap:10px;background:#fff;border:2px solid #f1e4d2;border-radius:16px;padding:12px}
 .sess[hidden]{display:none}
@@ -411,6 +438,27 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
         <button class="choice kata" id="ev-kata"><b>ア</b><span class="cname">カタカナ</span></button>
         <button class="choice kanji" id="ev-k1"><b>山</b><span class="cname">1ねんの かんじ</span></button>
       </div>
+      <button class="zukanbtn" id="go-zukan">ずかんを みる</button>
+    </div>
+
+    <!-- イベント版：ずかん -->
+    <div class="view" id="v-zukan" hidden>
+      <p class="lead">きょうりゅう ずかん</p>
+      <p class="total" id="zukanCount"></p>
+      <div class="zgrid" id="zgrid"></div>
+      <button class="back" data-view="event">‹ もどる</button>
+    </div>
+    <div class="view" id="v-zdetail" hidden>
+      <div class="zdetail">
+        <div class="zbig"><svg id="zBig" viewBox="0 0 100 100"></svg></div>
+        <div class="zinfo">
+          <p class="zname" id="zName"></p>
+          <p class="zreal" id="zReal"></p>
+          <ul class="zfacts" id="zFacts"></ul>
+          <div class="zstages" id="zStages"></div>
+        </div>
+      </div>
+      <button class="back" id="zBack">‹ ずかんに もどる</button>
     </div>
 
     <p class="total" id="startTotal"></p>
@@ -780,8 +828,43 @@ if (useDinoArt) {
   st.textContent = ".start-buddy{width:min(92%,440px);height:auto;aspect-ratio:2/1;border-radius:999px}.start-buddy svg{width:94%;height:94%}";
   document.head.append(st);
 }
-function dinoArtSvg(stage) {
-  const k = kid(), shell = `fill="${k.egg}" stroke="${k.line}" stroke-width="2" stroke-linejoin="round"`;
+/* ---------- ずかん ----------
+   ほんものの きょうりゅうの はなしは、ひょうごけん・ひとはく などの はっぴょうを もとに こどもむけに かいた */
+const ZUKAN = {
+  tita: {
+    real: "タンバティタニス・アミキティアエ", nick: "たんばりゅう",
+    facts: [
+      "2006ねんに ひょうごけん たんばしで みつかった きょうりゅう",
+      "くびと しっぽが ながくて、くさを たべる",
+      "おおきさは やく 15メートル。でも あたまは とても ちいさい",
+      "「アミキティアエ」は「ゆうじょう」という いみ。かせきを みつけた なかよしの ふたりに ちなんで つけられた",
+      "いまから やく 1おく1000まんねん まえに いた",
+    ],
+  },
+  guno: {
+    real: "ササヤマグノームス・サエグサイ", nick: "",
+    facts: [
+      "ひょうごけん たんばささやましで みつかった、つのりゅうの なかま",
+      "なまえは「ささやまの ちかに ねむる たからを まもる こびと」という いみ",
+      "みつかった かせきは こどもで、おおきさは やく 80センチ",
+      "2007ねんに ほりだされて、あとから あたらしい しゅるいの きょうりゅうだと わかった",
+      "いまから やく 1おく1000まんねん まえに いた",
+    ],
+  },
+  chii: {
+    real: "", nick: "レアキャラ",
+    facts: [
+      "たまに たまごから うまれる、めずらしい こ",
+      "うまれた ときは「ちぃ。ちゃん」。そだつと「あいさきちぃ。」に なる",
+    ],
+  },
+};
+const ZUKAN_KEY = "moji-quiz-zukan";
+const zukanFound = () => { try { return JSON.parse(localStorage.getItem(ZUKAN_KEY)) || {}; } catch (e) { return {}; } };
+function markFound(id) { const f = zukanFound(); if (f[id]) return false; f[id] = Date.now(); try { localStorage.setItem(ZUKAN_KEY, JSON.stringify(f)); } catch (e) {} return true; }
+
+function dinoArtSvg(stage, k = kid()) {
+  const shell = `fill="${k.egg}" stroke="${k.line}" stroke-width="2" stroke-linejoin="round"`;
   const spots = `<circle cx="36" cy="74" r="4.5" fill="${k.spot}"/><circle cx="64" cy="79" r="5.5" fill="${k.spot}"/><circle cx="52" cy="88" r="3" fill="${k.spot}"/>`;
   if (stage === 0) {
     const e = MYSTERY_EGG, es = `fill="${e.egg}" stroke="${e.line}" stroke-width="2"`;
@@ -906,27 +989,38 @@ function showGrow(a, b, opts = {}) {
     }
     tone([523, 659, 784, 1047, 1319, 1568], "triangle", .12);
     if (state.voice) later(500, () => speak(changed ? $("evoName").textContent : "レベルアップ！"));
-    if (opts.auto) later(3600, closeGrow);
-    else later(1200, () => { $("evoOk").hidden = false; $("evoOk").focus(); });
+    // じっくり みられるように、タップするまで とじない（イベント版は だれも さわらなければ 20びょうで つぎへ）
+    $("evoOk").textContent = opts.okText || "やったー！";
+    later(1200, () => { $("evoOk").hidden = false; $("evoOk").focus(); evoTapReady = true; });
+    if (opts.auto) later(20000, closeGrow);
   };
   // すがたが かわる ときは ためてから へんしん、かわらない ときは すぐ
   if (changed) later(1700, reveal); else reveal();
   afterLvUp = opts.then || null;
 }
 function closeGrow() {
+  evoTapReady = false;
   evoTimers.forEach(clearTimeout); evoTimers = [];
   $("evo").hidden = true; $("evo").className = "evo";
   const f = afterLvUp; afterLvUp = null;
   if (f) f(); else say("これからも いっしょに がんばろう！", "cheer");
 }
-$("evoOk").onclick = closeGrow;
+$("evoOk").onclick = e => { e.stopPropagation(); closeGrow(); };
+// がめんの どこを タップしても つぎへ（ボタンが でてから）
+let evoTapReady = false;
+$("evo").addEventListener("click", () => { if (evoTapReady) closeGrow(); });
 // おうち版：レベルアップ（ポイントで そだつ）
 function showLevelUp(fromLv, toLv, then) {
   const a = stageOf(fromLv), b = stageOf(toLv);
   showGrow(a, b, { big: `Lv.${toLv}`, sub: b > a ? `Lv.${fromLv} → Lv.${toLv}` : "もっと つよく なったよ！", then });
 }
 // イベント版：とちゅうの へんしん（じどうで つぎの もんだいへ）
-function showEvolve(a, b, then) { showGrow(a, b, { auto: true, sub: "このまま つぎの もじも かこう！", then }); }
+function showEvolve(a, b, then) {
+  // さいごの せいちょうで ずかんに とうろく
+  const isNew = b === MAX_STAGE && useDinoArt && markFound(kid().id);
+  const sub = b === MAX_STAGE ? (isNew ? "ずかんに あたらしく のったよ！" : "ずかんで くわしく みられるよ") : "このまま つぎの もじも かこう！";
+  showGrow(a, b, { auto: true, sub, okText: "タップして つぎへ", then });
+}
 
 /* ---------- おうえん ---------- */
 const PRAISE = ["じょうず！", "いいね！", "そのちょうし！", "きれいに かけたね！", "ばっちり！", "すごい！"];
@@ -1321,7 +1415,9 @@ function showResult() {
     ? `${STAGE_NAMES[MAX_STAGE]}に なったよ！ はなまる ${p}こ`
     : `${n}もん ちゅう はなまる ${p}こ！`;
   $("resChars").innerHTML = sess.results.map(r => `<span>${r.c}<i>${r.perfect ? "◎" : "○"}</i></span>`).join("");
-  $("resAgain").hidden = EDITION === "event";
+  // イベント版の「もういちど」は「ずかんを みる」に する
+  $("resAgain").hidden = EDITION === "event" && !useDinoArt;
+  $("resAgain").textContent = EDITION === "event" ? "ずかんを みる" : "もういちど";
   $("resDone").textContent = EDITION === "event" ? "つぎの ひとに こうたい" : "メニューへ";
   const cf = $("confetti2"); cf.innerHTML = "";
   const colors = ["#e8577e", "#3d6fd8", "#ffd34d", "#3a9d6a", "#ff9a3c"];
@@ -1358,6 +1454,8 @@ function quitSession() {
 $("promptAgain").onclick = () => { if (!busy && sess) { charMisses++; flash(); } };
 $("resDone").onclick = () => { endSession(); showStart(EDITION === "event" ? "event" : "menu"); };
 $("resAgain").onclick = () => {
+  // イベント版：いま そだてた キャラの ずかんへ
+  if (EDITION === "event") { const k = kid(); endSession(); return showZukanDetail(k); }
   const { kind, title, guide } = sess, keys = [...new Set(sess.items.map(x => x.key))];
   endSession();
   if (kind === "review") startReview(); else startSession(kind, randomItems(keys[0], QUIZ_QUESTIONS), { guide, title });
@@ -1375,17 +1473,20 @@ if (EDITION === "event") setInterval(() => {
   const now = Date.now();
   const onResult = !$("result").hidden && now - resultShownAt > 45000 && now - lastTouch > 45000;
   const left = sess && $("result").hidden && now - lastTouch > 90000;
-  if (onResult || left) { endSession(); showStart("event"); }
+  const inZukan = !$("start").hidden && $("start").classList.contains("zmode") && now - lastTouch > 90000;
+  if (onResult || left || inZukan) { endSession(); showStart("event"); }
 }, 5000);
 
 /* ---------- スタートがめん ---------- */
 const doneCount = s => [...s].filter(c => state.cleared[c]).length;
-const VIEWS = ["title", "new", "pick", "menu", "grade", "quiz", "event"];
+const VIEWS = ["title", "new", "pick", "menu", "grade", "quiz", "event", "zukan", "zdetail"];
 function showStart(view) {
   if (busy) return;
   clearTimeout(idleTimer);
   if (["menu", "grade", "quiz"].includes(view) && !profile) view = "title";
   VIEWS.forEach(v => { $("v-" + v).hidden = v !== view; });
+  // ずかんでは タイトルと うえの キャラを かくして、ずかんを ひろく みせる
+  $("start").classList.toggle("zmode", view === "zukan" || view === "zdetail");
   // イベント版の はじめの がめんは、つぎに でてくる キャラの おとなの すがたを みせる
   if (EDITION === "event" && useDinoArt) {
     // はじめの がめんは ティタ と グノ を ならべて みせる
@@ -1405,9 +1506,43 @@ function showStart(view) {
   if (view === "menu") renderMenu();
   if (view === "grade") renderGrades();
   if (view === "quiz") renderQuizSets();
+  if (view === "zukan") renderZukan();
   $("app").hidden = true; $("start").hidden = false;
   try { speechSynthesis.cancel(); } catch (e) {}
 }
+/* ---------- ずかんの がめん ---------- */
+const kidSvg = (k, stage) => dinoArtSvg(stage, k);
+function renderZukan() {
+  const found = zukanFound(), list = DINO_KIDS.filter(k => DINO_IMAGES[k.id]);
+  // レアキャラは いちど みつけるまで ひみつ
+  const open = k => !k.rare || found[k.id];
+  $("zukanCount").textContent = `みつけた かず：${list.filter(k => found[k.id]).length} / ${list.length}`;
+  $("zgrid").innerHTML = "";
+  list.forEach(k => {
+    const b = document.createElement("button"), z = ZUKAN[k.id] || {};
+    b.className = "zcard" + (open(k) ? "" : " locked");
+    b.innerHTML = `<span class="pic">${open(k) ? `<svg viewBox="0 0 100 100">${kidSvg(k, 2)}</svg>` : `<span class="q">？</span>`}</span><b></b><small></small>`
+      + (k.rare ? `<span class="rare">レア</span>` : "") + (found[k.id] ? `<span class="got">みつけた！</span>` : "");
+    b.querySelector("b").textContent = open(k) ? (k.adult || k.name) : "？？？";
+    b.querySelector("small").textContent = open(k) ? (z.real || z.nick || "") : "まだ みつけて いないよ";
+    if (open(k)) b.onclick = () => showZukanDetail(k); else b.disabled = true;
+    $("zgrid").append(b);
+  });
+}
+function showZukanDetail(k) {
+  const z = ZUKAN[k.id] || { facts: [] };
+  showStart("zdetail");
+  $("zBig").innerHTML = kidSvg(k, 2);
+  $("zName").textContent = k.adult || k.name;
+  $("zReal").textContent = z.real ? `ほんものの なまえ：${z.real}${z.nick ? `（${z.nick}）` : ""}` : (z.nick || "");
+  $("zFacts").innerHTML = "";
+  z.facts.forEach(f => { const li = document.createElement("li"); li.textContent = f; $("zFacts").append(li); });
+  // そだちかた：たまご → かおを だす → おとな
+  $("zStages").innerHTML = [0, 1, 2].map(s => `<span><svg viewBox="0 0 100 100">${kidSvg(k, s)}</svg></span>`).join("<i>›</i>");
+  if (state.voice) speak(`${k.adult || k.name}。${z.real || ""}`);
+}
+$("zBack").onclick = () => showStart("zukan");
+
 function renderProfiles() {
   $("profiles").innerHTML = "";
   root.profiles.forEach(p => {
@@ -1525,6 +1660,8 @@ $("back").onclick = () => {
 // イベント版
 let evGuide = true;
 const setEvLevel = g => { evGuide = g; $("ev-easy").setAttribute("aria-pressed", g); $("ev-hard").setAttribute("aria-pressed", !g); };
+$("go-zukan").onclick = () => showStart("zukan");
+$("go-zukan").hidden = !useDinoArt;
 $("ev-easy").onclick = () => setEvLevel(true);
 $("ev-hard").onclick = () => setEvLevel(false);
 [["ev-hira", "hira"], ["ev-kata", "kata"], ["ev-k1", "k1"]].forEach(([id, key]) => {
@@ -1538,7 +1675,7 @@ document.addEventListener("keydown", e => {
 
 /* ---------- あたらしい バージョンが あれば よみなおす ----------
    GitHub Pages は 10ぷん ほど ふるい ページを のこすので、小さい version.json だけ まいかい たしかめる */
-const BUILD_ID = "20261125090548";
+const BUILD_ID = "20261125094116";
 if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
   fetch("version.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
