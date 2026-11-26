@@ -1428,7 +1428,9 @@ function showResult() {
   }
   $("result").hidden = false;
   tone([523, 659, 784, 1047, 1319], "triangle", .13);
-  if (state.voice) setTimeout(() => speak($("resTitle").textContent + " " + $("resMsg").textContent), 300);
+  // イベント版は さいごに「こうたい してね」も いう
+  const handOver = EDITION === "event" ? "。 つぎの おともだちに こうたい してね！" : "";
+  if (state.voice) setTimeout(() => speak($("resTitle").textContent + " " + $("resMsg").textContent + handOver), 300);
   resultShownAt = Date.now();
 }
 function endSession() {
@@ -1675,7 +1677,7 @@ document.addEventListener("keydown", e => {
 
 /* ---------- あたらしい バージョンが あれば よみなおす ----------
    GitHub Pages は 10ぷん ほど ふるい ページを のこすので、小さい version.json だけ まいかい たしかめる */
-const BUILD_ID = "20261125094116";
+const BUILD_ID = "20261126134013";
 if (/^https?:/.test(location.protocol) && !BUILD_ID.startsWith("__")) {
   fetch("version.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
